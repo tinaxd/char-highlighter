@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Char Highlighter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 16px;
+    }
+
+    body {
+      background-color: #0a0a0a;
+      color: #e0e0e0;
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 860px;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 0.4rem;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      font-size: 0.78rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .legend-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    /* Input */
+    .input-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .input-section label {
+      display: block;
+      font-size: 0.8rem;
+      color: #999;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      background-color: #141414;
+      color: #e0e0e0;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1rem;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    textarea:focus {
+      border-color: #444;
+    }
+
+    textarea::placeholder {
+      color: #555;
+    }
+
+    /* Output */
+    .output-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .output-section label {
+      display: block;
+      font-size: 0.8rem;
+      color: #999;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .highlighted-output {
+      width: 100%;
+      min-height: 120px;
+      background-color: #141414;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.15rem;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      word-break: break-all;
+      overflow-wrap: break-word;
+      color: #e0e0e0;
+      min-height: 140px;
+    }
+
+    .highlighted-output:empty::before {
+      content: 'Your highlighted text will appear here…';
+      color: #444;
+      font-style: italic;
+    }
+
+    /* Character color classes */
+    .char-up {
+      color: #FFD700;
+      font-weight: 700;
+    }
+
+    .char-low {
+      color: #d0d0d0;
+    }
+
+    .char-num {
+      color: #00E676;
+      font-weight: 700;
+    }
+
+    .char-spec {
+      color: #FF4081;
+      font-weight: 700;
+    }
+
+    .char-space {
+      color: #555;
+    }
+
+    /* Buttons */
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.65rem 1.4rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+      letter-spacing: 0.03em;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-copy {
+      background-color: #1e88e5;
+      color: #fff;
+    }
+
+    .btn-copy:hover {
+      background-color: #1565c0;
+    }
+
+    .btn-clear {
+      background-color: #2a2a2a;
+      color: #aaa;
+    }
+
+    .btn-clear:hover {
+      background-color: #3a3a3a;
+      color: #ddd;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background-color: #1e88e5;
+      color: #fff;
+      padding: 0.7rem 1.5rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-family: 'JetBrains Mono', monospace;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Footer */
+    footer {
+      margin-top: auto;
+      padding-top: 3rem;
+      font-size: 0.72rem;
+      color: #444;
+      text-align: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      body {
+        padding: 1.2rem 0.75rem;
+      }
+
+      header h1 {
+        font-size: 1.4rem;
+      }
+
+      .legend {
+        gap: 0.6rem;
+        font-size: 0.7rem;
+      }
+
+      .highlighted-output,
+      textarea {
+        font-size: 0.95rem;
+        padding: 0.75rem;
+      }
+
+      .btn {
+        padding: 0.55rem 1rem;
+        font-size: 0.78rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>✦ Char Highlighter</h1>
+      <p>Spot the difference between O and 0, l and 1, and I — at a glance.</p>
+    </header>
+
+    <div class="legend">
+      <div class="legend-item">
+        <span class="legend-swatch" style="background:#FFD700;"></span>
+        <span>UPPERCASE</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch" style="background:#d0d0d0;"></span>
+        <span>lowercase</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch" style="background:#00E676;"></span>
+        <span>0-9 digits</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch" style="background:#FF4081;"></span>
+        <span>special !@#</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch" style="background:#555;">·</span>
+        <span>spaces</span>
+      </div>
+    </div>
+
+    <div class="input-section">
+      <label for="input-text">Paste or type your text</label>
+      <textarea id="input-text" placeholder="e.g. P@ssw0rd! vs pa$$w0rd — spot the difference…"></textarea>
+    </div>
+
+    <div class="output-section">
+      <label>Highlighted result</label>
+      <div id="highlighted-output" class="highlighted-output"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-copy" id="btn-copy" title="Copy original plain text to clipboard">
+        📋 Copy Text
+      </button>
+      <button class="btn btn-clear" id="btn-clear" title="Clear all fields">
+        ✕ Clear
+      </button>
+    </div>
+  </div>
+
+  <footer>
+    char-highlighter &middot; built for clarity
+  </footer>
+
+  <div class="toast" id="toast">Copied to clipboard!</div>
+
+  <script>
+    const inputEl = document.getElementById('input-text');
+    const outputEl = document.getElementById('highlighted-output');
+    const btnCopy = document.getElementById('btn-copy');
+    const btnClear = document.getElementById('btn-clear');
+    const toast = document.getElementById('toast');
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function highlight(text) {
+      if (!text) return '';
+
+      return text.split('').map(char => {
+        let className = 'char-low';
+
+        if (char === ' ') {
+          return `<span class="char-space">·</span>`;
+        }
+
+        if (/[A-Z]/.test(char)) {
+          className = 'char-up';
+        } else if (/[0-9]/.test(char)) {
+          className = 'char-num';
+        } else if (/[^A-Za-z0-9\s]/.test(char)) {
+          className = 'char-spec';
+        }
+
+        return `<span class="${className}">${escapeHtml(char)}</span>`;
+      }).join('');
+    }
+
+    function onInput() {
+      const text = inputEl.value;
+      if (text.trim() === '') {
+        outputEl.innerHTML = '';
+      } else {
+        outputEl.innerHTML = highlight(text);
+      }
+    }
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1800);
+    }
+
+    function copyText() {
+      const text = inputEl.value;
+      if (!text) {
+        showToast('Nothing to copy!');
+        return;
+      }
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Copied to clipboard!');
+      }).catch(() => {
+        // Fallback
+        inputEl.select();
+        document.execCommand('copy');
+        showToast('Copied to clipboard!');
+      });
+    }
+
+    function clearAll() {
+      inputEl.value = '';
+      outputEl.innerHTML = '';
+      inputEl.focus();
+    }
+
+    inputEl.addEventListener('input', onInput);
+    btnCopy.addEventListener('click', copyText);
+    btnClear.addEventListener('click', clearAll);
+  </script>
+</body>
+</html>
